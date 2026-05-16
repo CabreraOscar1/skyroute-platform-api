@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using SkyRoute.Api.Pricing;
 using SkyRoute.Api.Providers;
 using SkyRoute.Api.Services;
+using SkyRoute.Api.Validation;
 
 const string FrontendCorsPolicy = "FrontendCors";
 
@@ -33,11 +34,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IAirportCatalog, AirportCatalog>();
+builder.Services.AddSingleton<IOfferStore, InMemoryOfferStore>();
 builder.Services.AddScoped<IFlightProvider, GlobalAirProvider>();
 builder.Services.AddScoped<IFlightProvider, BudgetWingsProvider>();
 builder.Services.AddScoped<IPricingStrategy, GlobalAirPricingStrategy>();
 builder.Services.AddScoped<IPricingStrategy, BudgetWingsPricingStrategy>();
+builder.Services.AddScoped<IDocumentValidationService, DocumentValidationService>();
 builder.Services.AddScoped<IFlightSearchService, FlightSearchService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 
 var app = builder.Build();
 
