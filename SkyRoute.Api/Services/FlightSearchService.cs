@@ -11,7 +11,7 @@ public sealed class FlightSearchService : IFlightSearchService
     private readonly IAirportCatalog _airportCatalog;
     private readonly IOfferStore _offerStore;
     private readonly IReadOnlyCollection<IFlightProvider> _providers;
-    private readonly IReadOnlyCollection<IPricingStrategy> _pricingStrategies;
+    private readonly IReadOnlyDictionary<string, IPricingStrategy> _pricingStrategies;
 
     public FlightSearchService(
         IAirportCatalog airportCatalog,
@@ -22,7 +22,9 @@ public sealed class FlightSearchService : IFlightSearchService
         _airportCatalog = airportCatalog;
         _offerStore = offerStore;
         _providers = providers.ToArray();
-        _pricingStrategies = pricingStrategies.ToArray();
+        _pricingStrategies = pricingStrategies.ToDictionary(
+            strategy => strategy.ProviderName,
+            StringComparer.OrdinalIgnoreCase);
     }
 
     public async Task<FlightSearchResult> SearchAsync(
@@ -30,7 +32,8 @@ public sealed class FlightSearchService : IFlightSearchService
         CancellationToken cancellationToken)
     {
         var criteria = ValidateAndCreateCriteria(request);
-        var searchId = $"srch_{Guid.NewGuid():N}"[..13];
+        var searchToken = Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
+        var searchId = $"SRCH-{searchToken}";
         var offers = new List<FlightOffer>();
 
         foreach (var provider in _providers)
@@ -39,7 +42,7 @@ public sealed class FlightSearchService : IFlightSearchService
             var pricingStrategy = GetPricingStrategy(provider.Name);
 
             var providerOffers = providerFlights.Select((flight, index) =>
-                CreateOffer(searchId, provider.Name, flight, criteria, pricingStrategy, index));
+                CreateOffer(searchToken, provider.Name, flight, criteria, pricingStrategy, index));
 
             offers.AddRange(providerOffers);
         }
@@ -61,7 +64,7 @@ public sealed class FlightSearchService : IFlightSearchService
         }
         else if (origin is null)
         {
-            errors[nameof(request.Origin)] = ["Origin airport is not supported."];
+            errors[nameof(request.Origin)] = ["Origin airport is not supported. Use one of the airports returned by GET /api/airports."];
         }
 
         if (string.IsNullOrWhiteSpace(request.Destination))
@@ -70,14 +73,14 @@ public sealed class FlightSearchService : IFlightSearchService
         }
         else if (destination is null)
         {
-            errors[nameof(request.Destination)] = ["Destination airport is not supported."];
+            errors[nameof(request.Destination)] = ["Destination airport is not supported. Use one of the airports returned by GET /api/airports."];
         }
 
         if (origin is not null &&
             destination is not null &&
             origin.Code == destination.Code)
         {
-            errors[nameof(request.Destination)] = ["Origin and destination must be different."];
+            errors[nameof(request.Destination)] = ["Origin and destination must be different airports."];
         }
 
         if (request.DepartureDate == default)
@@ -92,7 +95,7 @@ public sealed class FlightSearchService : IFlightSearchService
 
         if (!Enum.IsDefined(request.CabinClass))
         {
-            errors[nameof(request.CabinClass)] = ["Cabin class is not supported."];
+            errors[nameof(request.CabinClass)] = ["Cabin class must be Economy, Business, or FirstClass."];
         }
 
         if (errors.Count > 0 || origin is null || destination is null)
@@ -108,13 +111,18 @@ public sealed class FlightSearchService : IFlightSearchService
             request.CabinClass);
     }
 
-    private IPricingStrategy GetPricingStrategy(string providerName) =>
-        _pricingStrategies.FirstOrDefault(strategy =>
-            string.Equals(strategy.ProviderName, providerName, StringComparison.OrdinalIgnoreCase))
-        ?? throw new InvalidOperationException($"No pricing strategy registered for provider '{providerName}'.");
+    private IPricingStrategy GetPricingStrategy(string providerName)
+    {
+        if (_pricingStrategies.TryGetValue(providerName, out var pricingStrategy))
+        {
+            return pricingStrategy;
+        }
+
+        throw new InvalidOperationException($"No pricing strategy registered for provider '{providerName}'.");
+    }
 
     private static FlightOffer CreateOffer(
-        string searchId,
+        string searchToken,
         string providerName,
         ProviderFlight flight,
         FlightSearchCriteria criteria,
@@ -124,7 +132,7 @@ public sealed class FlightSearchService : IFlightSearchService
         var pricePerPassenger = pricingStrategy.CalculatePricePerPassenger(flight.BaseFare);
         var totalPrice = Math.Round(pricePerPassenger * criteria.PassengerCount, 2);
         var providerCode = CreateProviderCode(providerName);
-        var offerId = $"off_{providerCode}_{searchId[5..]}_{index + 1}";
+        var offerId = $"OFF-{providerCode}-{searchToken}-{index + 1:D2}";
 
         return new FlightOffer(
             offerId,
@@ -146,8 +154,8 @@ public sealed class FlightSearchService : IFlightSearchService
     private static string CreateProviderCode(string providerName) =>
         providerName switch
         {
-            "GlobalAir" => "ga",
-            "BudgetWings" => "bw",
-            _ => providerName[..Math.Min(2, providerName.Length)].ToLowerInvariant()
+            "GlobalAir" => "GA",
+            "BudgetWings" => "BW",
+            _ => providerName[..Math.Min(2, providerName.Length)].ToUpperInvariant()
         };
 }

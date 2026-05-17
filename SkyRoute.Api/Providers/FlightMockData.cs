@@ -4,6 +4,30 @@ namespace SkyRoute.Api.Providers;
 
 internal static class FlightMockData
 {
+    public static ProviderFlight CreateFlight(
+        FlightSearchCriteria criteria,
+        string providerPrefix,
+        int option,
+        TimeOnly departureTime,
+        decimal fareAdjustment,
+        int durationOptionOffset = 0)
+    {
+        var departureAt = criteria.DepartureDate.ToDateTime(departureTime);
+        var durationMinutes = CalculateDurationMinutes(criteria, option + durationOptionOffset);
+        var arrivalAt = departureAt.AddMinutes(durationMinutes);
+        var baseFare = CalculateBaseFare(criteria, option, fareAdjustment);
+        var flightNumber = CreateFlightNumber(providerPrefix, criteria, option);
+
+        return new ProviderFlight(
+            flightNumber,
+            departureAt,
+            arrivalAt,
+            durationMinutes,
+            criteria.CabinClass,
+            baseFare,
+            "USD");
+    }
+
     public static int CalculateDurationMinutes(FlightSearchCriteria criteria, int option)
     {
         var isDomestic = criteria.Origin.CountryCode == criteria.Destination.CountryCode;
@@ -13,7 +37,7 @@ internal static class FlightMockData
         return baseDuration + routeOffset + (option * 35);
     }
 
-    public static decimal CalculateBaseFare(
+    private static decimal CalculateBaseFare(
         FlightSearchCriteria criteria,
         int option,
         decimal fareAdjustment)
@@ -32,7 +56,7 @@ internal static class FlightMockData
         return Math.Round(((baseFare + routeOffset + (option * 24m)) * cabinMultiplier) + fareAdjustment, 2);
     }
 
-    public static string CreateFlightNumber(
+    private static string CreateFlightNumber(
         string prefix,
         FlightSearchCriteria criteria,
         int option)

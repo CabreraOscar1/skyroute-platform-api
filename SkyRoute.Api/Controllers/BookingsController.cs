@@ -30,18 +30,7 @@ public sealed class BookingsController : ControllerBase
         }
         catch (BookingValidationException exception)
         {
-            var problemDetails = new ValidationProblemDetails
-            {
-                Title = "One or more validation errors occurred.",
-                Status = StatusCodes.Status400BadRequest
-            };
-
-            foreach (var error in exception.Errors)
-            {
-                problemDetails.Errors.Add(error.Key, error.Value);
-            }
-
-            return BadRequest(problemDetails);
+            return BadRequest(ValidationProblemFactory.Create(exception.Errors));
         }
     }
 }

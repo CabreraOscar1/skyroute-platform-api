@@ -48,7 +48,7 @@ public sealed class BookingService : IBookingService
         }
         else if (offer is null)
         {
-            errors[nameof(request.OfferId)] = ["Offer id does not exist or has expired."];
+            errors[nameof(request.OfferId)] = ["Offer id was not found or has expired. Search flights again before booking."];
         }
 
         if (request.PrimaryPassenger is null)
@@ -75,21 +75,21 @@ public sealed class BookingService : IBookingService
     {
         if (string.IsNullOrWhiteSpace(passenger.FullName))
         {
-            errors["PrimaryPassenger.FullName"] = ["Full name is required."];
+            errors["PrimaryPassenger.FullName"] = ["Passenger full name is required."];
         }
 
         if (string.IsNullOrWhiteSpace(passenger.Email))
         {
-            errors["PrimaryPassenger.Email"] = ["Email is required."];
+            errors["PrimaryPassenger.Email"] = ["Passenger email is required."];
         }
         else if (!IsValidEmail(passenger.Email))
         {
-            errors["PrimaryPassenger.Email"] = ["Email format is invalid."];
+            errors["PrimaryPassenger.Email"] = ["Passenger email format is invalid."];
         }
 
         if (string.IsNullOrWhiteSpace(passenger.DocumentNumber))
         {
-            errors["PrimaryPassenger.DocumentNumber"] = ["Document number is required."];
+            errors["PrimaryPassenger.DocumentNumber"] = ["Passenger document number is required."];
             return;
         }
 

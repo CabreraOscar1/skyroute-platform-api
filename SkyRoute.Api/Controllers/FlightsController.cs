@@ -30,18 +30,7 @@ public sealed class FlightsController : ControllerBase
         }
         catch (FlightSearchValidationException exception)
         {
-            var problemDetails = new ValidationProblemDetails
-            {
-                Title = "one or more validation errors occurred",
-                Status = StatusCodes.Status400BadRequest
-            };
-
-            foreach (var error in exception.Errors)
-            {
-                problemDetails.Errors.Add(error.Key, error.Value);
-            }
-
-            return BadRequest(problemDetails);
+            return BadRequest(ValidationProblemFactory.Create(exception.Errors));
         }
     }
 }
