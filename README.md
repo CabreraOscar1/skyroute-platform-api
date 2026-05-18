@@ -1,90 +1,90 @@
-# SkyRoute Travel Platform
+# SkyRoute Platform API
 
-Repositorio para el challenge tecnico full-stack de SkyRoute.
+.NET backend for the SkyRoute Travel Platform technical challenge.
 
-## Objetivo
+This API supports the flight search and booking flow consumed by the Angular frontend. It mocks multiple airline providers, applies provider-specific pricing rules, validates booking data, and returns normalized responses for the UI.
 
-Construir un modulo local de busqueda y reserva de vuelos con:
+## Stack
 
-- Frontend Angular.
-- Backend .NET.
-- Proveedores mockeados `GlobalAir` y `BudgetWings`.
-- Pricing por proveedor.
-- Ordenamiento de resultados en frontend, sin nueva llamada al backend.
-- Flujo de booking con validacion de documento domestico/internacional.
+- .NET 8
+- ASP.NET Core Web API
+- Swagger/OpenAPI
+- xUnit
 
-## Documentacion
+## Requirements
 
-- `docs/01-requerimientos.md`: requisitos funcionales refinados desde el `.docx`.
-- `docs/02-arquitectura-propuesta.md`: decisiones tecnicas, contratos y responsabilidades.
-- `docs/03-tareas-front-back.md`: tareas separadas entre backend, frontend e integracion.
-- `docs/04-frontend-angular-handoff.md`: guia para arrancar el frontend Angular en otra ventana de contexto.
+- .NET 8 SDK.
+- Visual Studio 2022 or the .NET CLI.
+- Optional: Angular frontend running at `http://localhost:4200`.
 
-## Estado
+## Implemented Features
 
-La rama `dev` contiene la preparacion documental del proyecto y el backend principal:
+- `GET /api/airports`
+- `POST /api/flights/search`
+- `POST /api/bookings`
+- Mocked providers:
+  - `GlobalAir`
+  - `BudgetWings`
+- Provider-specific pricing:
+  - `GlobalAir`: base fare + 15%, rounded to 2 decimals.
+  - `BudgetWings`: base fare - 10%, minimum final price of `USD 29.99`.
+- Hardcoded airport catalog: 6 airports across 2 countries.
+- Realistic results for any valid search.
+- Per-passenger price and total price for all passengers.
+- Flight search validation, including future departure date validation.
+- Booking validation.
+- Route-based document validation:
+  - `National ID` for domestic flights.
+  - `Passport Number` for international flights.
+- Offers stored in memory for 30 minutes so they can be booked after search.
+- CORS configured for the local Angular frontend.
+- Unit tests for services, pricing, and validation.
 
-- API .NET 8 creada.
-- `GET /api/airports` implementado.
-- `POST /api/flights/search` implementado.
-- `POST /api/bookings` implementado.
-- Providers mockeados `GlobalAir` y `BudgetWings`.
-- Pricing por proveedor.
-- Validacion de `Passport Number` para rutas internacionales.
-- Validacion de `National ID` para rutas domesticas.
-- CORS listo para Angular local.
-- Tests unitarios backend agregados.
+## Running From Visual Studio 2022
 
-Aun falta implementar frontend Angular y tests frontend.
+1. Open:
 
-## Backend
+```text
+SkyRoute.Api/SkyRoute.Api.sln
+```
 
-### Ejecutar desde Visual Studio 2022
-
-1. Abrir `Backend/SkyRoute.Api/SkyRoute.Api.sln`.
-2. Seleccionar el perfil `https`.
-3. Ejecutar con `F5` o el boton verde.
-4. Abrir Swagger en la URL que levante Visual Studio, normalmente:
+2. Select the `https` profile.
+3. Run with `F5` or the green play button.
+4. Open Swagger:
 
 ```text
 https://localhost:7140/swagger
 ```
 
-### Ejecutar por consola
+## Running From The Command Line
 
 ```powershell
-dotnet run --project Backend\SkyRoute.Api\SkyRoute.Api.csproj --launch-profile https
+dotnet run --project SkyRoute.Api\SkyRoute.Api.csproj --launch-profile https
 ```
 
-### Ejecutar tests backend
+## Tests
 
 ```powershell
-dotnet test Backend\SkyRoute.Api.Tests\SkyRoute.Api.Tests.csproj
+dotnet test SkyRoute.Api.Tests\SkyRoute.Api.Tests.csproj
 ```
 
-Si los paquetes ya estan restaurados y se quiere una corrida rapida:
+## Endpoints
 
-```powershell
-dotnet test Backend\SkyRoute.Api.Tests\SkyRoute.Api.Tests.csproj --no-build --no-restore
-```
-
-### Endpoints disponibles
-
-#### Listar aeropuertos
+### List Airports
 
 ```http
 GET /api/airports
 ```
 
-Devuelve los aeropuertos hardcodeados que debe usar el frontend.
+Returns the airport catalog consumed by the frontend. The catalog is hardcoded for the challenge and includes 6 airports across 2 countries.
 
-#### Buscar vuelos
+### Search Flights
 
 ```http
 POST /api/flights/search
 ```
 
-Body:
+Request:
 
 ```json
 {
@@ -96,15 +96,32 @@ Body:
 }
 ```
 
-La respuesta incluye resultados normalizados de `GlobalAir` y `BudgetWings`, con `pricePerPassenger` y `totalPrice`.
+Response:
 
-#### Confirmar booking
+```json
+{
+  "searchId": "SRCH-20D6CBA4",
+  "results": [
+    {
+      "offerId": "OFF-GA-20D6CBA4-01",
+      "provider": "GlobalAir",
+      "flightNumber": "GA543",
+      "pricePerPassenger": 400.20,
+      "passengerCount": 2,
+      "totalPrice": 800.40,
+      "currency": "USD"
+    }
+  ]
+}
+```
+
+### Confirm Booking
 
 ```http
 POST /api/bookings
 ```
 
-Body:
+Request:
 
 ```json
 {
@@ -117,28 +134,73 @@ Body:
 }
 ```
 
-Importante: primero hay que ejecutar una busqueda y copiar un `offerId` real de la respuesta. Las ofertas se guardan en memoria por 30 minutos y se pierden al reiniciar la API.
+Response:
 
-## Decisiones de arquitectura
+```json
+{
+  "bookingReference": "SKY-20260610-2E6B2",
+  "status": "Confirmed",
+  "offerId": "OFF-GA-20D6CBA4-01",
+  "provider": "GlobalAir",
+  "flightNumber": "GA543",
+  "totalPrice": 800.40,
+  "currency": "USD"
+}
+```
 
-- `Contracts` contiene los modelos HTTP de entrada y salida.
-- `Domain` contiene modelos internos del negocio.
-- `Providers` simula aerolineas y deja preparado el agregado de nuevos proveedores.
-- `Pricing` encapsula las reglas de precio por proveedor.
-- `Services` concentra los casos de uso de busqueda y booking.
-- `Validation` contiene validaciones compartidas y formateo consistente de errores.
+Important: search flights first and use a real `offerId` from the search response. Offers are stored in memory for 30 minutes and are lost when the API restarts.
 
-## Trade-offs conocidos
+## Backend Architecture
 
-- Persistencia en memoria para ofertas; suficiente para el challenge, no para produccion.
-- Sin autenticacion, pagos ni integraciones reales con aerolineas.
-- Los vuelos son mockeados pero deterministas segun ruta/cabina.
-- El booking confirma solo un pasajero principal, aunque el precio contempla todos los pasajeros buscados.
+```text
+SkyRoute.Api/
+  Controllers/
+  Contracts/
+  Domain/
+  Pricing/
+  Providers/
+  Services/
+  Validation/
+```
 
-## Proximos pasos
+## Technical Decisions
 
-1. Scaffold de frontend Angular.
-2. Implementacion del flujo de busqueda en frontend.
-3. Implementacion del flujo de booking en frontend.
-4. Tests frontend.
-5. Verificacion manual end-to-end.
+Controllers are thin: they receive requests, call services, and return responses.
+
+`Contracts` contains HTTP request and response DTOs. `Domain` contains internal business models.
+
+`Services` contains use cases such as flight search and booking.
+
+`Providers` simulates airline providers. A new provider can be added by implementing `IFlightProvider`.
+
+`Pricing` encapsulates provider-specific pricing rules through `IPricingStrategy`.
+
+`Validation` centralizes validation rules and consistent `ValidationProblemDetails` responses.
+
+The solution applies Clean Architecture principles pragmatically inside a single project. For a larger system, it could evolve into separate `.Api`, `.Application`, `.Domain`, and `.Infrastructure` projects.
+
+## Validation
+
+The backend is the final source of truth for business validation. The API validates:
+
+- Supported origin and destination airports.
+- Different origin and destination.
+- Required departure date.
+- Departure date must be today or a future date.
+- Passenger count between 1 and 9.
+- Supported cabin class.
+- Existing and non-expired offer id before booking.
+- Passenger name, email, and document number.
+- Route-based document format:
+  - domestic flights require `National ID`;
+  - international flights require `Passport Number`.
+
+## Trade-offs
+
+- In-memory persistence, enough for the challenge scope.
+- No authentication.
+- No payment flow.
+- No real external provider integrations.
+- No formal API versioning yet.
+- No idempotency key for booking yet.
+- No server-side pagination because the mocked result set is small.
