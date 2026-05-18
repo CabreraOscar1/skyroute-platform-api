@@ -1,0 +1,35 @@
+@SkyRoute.Api_HostAddress = http://localhost:5115
+
+GET {{SkyRoute.Api_HostAddress}}/api/airports
+Accept: application/json
+
+###
+
+POST {{SkyRoute.Api_HostAddress}}/api/flights/search
+Content-Type: application/json
+Accept: application/json
+
+{
+  "origin": "EZE",
+  "destination": "MIA",
+  "departureDate": "2026-06-10",
+  "passengerCount": 2,
+  "cabinClass": "Economy"
+}
+
+###
+
+POST {{SkyRoute.Api_HostAddress}}/api/bookings
+Content-Type: application/json
+Accept: application/json
+
+{
+  "offerId": "replace-with-offer-id-from-search",
+  "primaryPassenger": {
+    "fullName": "Ana Perez",
+    "email": "ana.perez@example.com",
+    "documentNumber": "A1234567"
+  }
+}
+
+###
