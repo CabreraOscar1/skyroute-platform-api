@@ -14,7 +14,7 @@ public sealed class FlightSearchServiceTests
     {
         var store = new InMemoryOfferStore();
         var service = CreateService(store);
-        var request = new FlightSearchRequest("EZE", "MIA", new DateOnly(2026, 6, 10), 2, CabinClass.Economy);
+        var request = new FlightSearchRequest("EZE", "MIA", FutureDepartureDate(), 2, CabinClass.Economy);
 
         var result = await service.SearchAsync(request, CancellationToken.None);
 
@@ -37,11 +37,25 @@ public sealed class FlightSearchServiceTests
     public async Task Search_rejects_invalid_criteria(string origin, string destination, int passengers)
     {
         var service = CreateService(new InMemoryOfferStore());
-        var request = new FlightSearchRequest(origin, destination, new DateOnly(2026, 6, 10), passengers, CabinClass.Economy);
+        var request = new FlightSearchRequest(origin, destination, FutureDepartureDate(), passengers, CabinClass.Economy);
 
         await Assert.ThrowsAsync<FlightSearchValidationException>(() =>
             service.SearchAsync(request, CancellationToken.None));
     }
+
+    [Fact]
+    public async Task Search_rejects_past_departure_date()
+    {
+        var service = CreateService(new InMemoryOfferStore());
+        var pastDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-1));
+        var request = new FlightSearchRequest("EZE", "MIA", pastDate, 2, CabinClass.Economy);
+
+        await Assert.ThrowsAsync<FlightSearchValidationException>(() =>
+            service.SearchAsync(request, CancellationToken.None));
+    }
+
+    private static DateOnly FutureDepartureDate() =>
+        DateOnly.FromDateTime(DateTime.Today.AddDays(30));
 
     private static FlightSearchService CreateService(IOfferStore offerStore) =>
         new(

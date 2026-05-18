@@ -87,6 +87,10 @@ public sealed class FlightSearchService : IFlightSearchService
         {
             errors[nameof(request.DepartureDate)] = ["Departure date is required."];
         }
+        else if (request.DepartureDate < DateOnly.FromDateTime(DateTime.Today))
+        {
+            errors[nameof(request.DepartureDate)] = ["Departure date must be today or a future date."];
+        }
 
         if (request.PassengerCount is < 1 or > 9)
         {
