@@ -25,9 +25,11 @@ This API supports the flight search and booking flow consumed by the Angular fro
 - Mocked providers:
   - `GlobalAir`
   - `BudgetWings`
+  - `ArcticAir`
 - Provider-specific pricing:
   - `GlobalAir`: base fare + 15%, rounded to 2 decimals.
   - `BudgetWings`: base fare - 10%, minimum final price of `USD 29.99`.
+  - `ArcticAir`: base fare + 20%, then `USD 10.00` loyalty discount, minimum final price of `USD 49.99`.
 - Hardcoded airport catalog: 6 airports across 2 countries.
 - Realistic results for any valid search.
 - Per-passenger price and total price for all passengers.

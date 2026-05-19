@@ -1,14 +1,16 @@
-﻿namespace SkyRoute.Api.Pricing
+namespace SkyRoute.Api.Pricing;
+
+public sealed class ArcticAirPricingStrategy : IPricingStrategy
 {
-    public class ArcticAirPricingStrategy : IPricingStrategy
+    private const decimal MinimumPrice = 49.99m;
+    private const decimal LoyaltyDiscount = 10m;
+
+    public string ProviderName => "ArcticAir";
+
+    public decimal CalculatePricePerPassenger(decimal baseFare)
     {
-        private const decimal MinimumPrice = 49.99m;
+        var discountedPrice = Math.Round((baseFare * 1.20m) - LoyaltyDiscount, 2);
 
-        public string ProviderName => "ArcticAir";
-
-        public decimal CalculatePricePerPassenger(decimal baseFare) =>
-            Math.Max(Math.Round((baseFare * 1.20m), 2), MinimumPrice);
-
-
+        return Math.Max(discountedPrice, MinimumPrice);
     }
 }

@@ -160,6 +160,7 @@ public sealed class FlightSearchService : IFlightSearchService
         {
             "GlobalAir" => "GA",
             "BudgetWings" => "BW",
+            "ArcticAir" => "AA",
             _ => providerName[..Math.Min(2, providerName.Length)].ToUpperInvariant()
         };
 }

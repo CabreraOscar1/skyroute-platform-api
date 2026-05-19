@@ -14,8 +14,6 @@
     <Folder Include="Controllers\" />
     <Folder Include="Contracts\" />
     <Folder Include="Domain\" />
-    <Folder Include="Providers\" />
-    <Folder Include="Services\" />
     <Folder Include="Validation\" />
   </ItemGroup>
 
