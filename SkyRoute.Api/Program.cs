@@ -37,6 +37,7 @@ builder.Services.AddSingleton<IAirportCatalog, AirportCatalog>();
 builder.Services.AddSingleton<IOfferStore, InMemoryOfferStore>();
 builder.Services.AddScoped<IFlightProvider, GlobalAirProvider>();
 builder.Services.AddScoped<IFlightProvider, BudgetWingsProvider>();
+builder.Services.AddScoped<IFlightProvider, ArcticAirProvider>();
 builder.Services.AddScoped<IPricingStrategy, GlobalAirPricingStrategy>();
 builder.Services.AddScoped<IPricingStrategy, BudgetWingsPricingStrategy>();
 builder.Services.AddScoped<IDocumentValidationService, DocumentValidationService>();
