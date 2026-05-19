@@ -19,9 +19,10 @@ public sealed class FlightSearchServiceTests
         var result = await service.SearchAsync(request, CancellationToken.None);
 
         Assert.StartsWith("SRCH-", result.SearchId);
-        Assert.Equal(6, result.Results.Count);
+        Assert.Equal(9, result.Results.Count);
         Assert.Contains(result.Results, offer => offer.Provider == "GlobalAir");
         Assert.Contains(result.Results, offer => offer.Provider == "BudgetWings");
+        Assert.Contains(result.Results, offer => offer.Provider == "ArcticAir");
         Assert.All(result.Results, offer =>
         {
             Assert.StartsWith("OFF-", offer.OfferId);
@@ -61,6 +62,6 @@ public sealed class FlightSearchServiceTests
         new(
             new AirportCatalog(),
             offerStore,
-            [new GlobalAirProvider(), new BudgetWingsProvider()],
-            [new GlobalAirPricingStrategy(), new BudgetWingsPricingStrategy()]);
+            [new GlobalAirProvider(), new BudgetWingsProvider(), new ArcticAirProvider()],
+            [new GlobalAirPricingStrategy(), new BudgetWingsPricingStrategy(), new ArcticAirPricingStrategy()]);
 }

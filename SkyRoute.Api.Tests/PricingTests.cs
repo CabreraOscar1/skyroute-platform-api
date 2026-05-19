@@ -33,4 +33,24 @@ public sealed class PricingTests
 
         Assert.Equal(29.99m, price);
     }
+
+    [Fact]
+    public void ArcticAir_applies_markup_and_loyalty_discount()
+    {
+        var strategy = new ArcticAirPricingStrategy();
+
+        var price = strategy.CalculatePricePerPassenger(100m);
+
+        Assert.Equal(110m, price);
+    }
+
+    [Fact]
+    public void ArcticAir_never_goes_below_minimum_price()
+    {
+        var strategy = new ArcticAirPricingStrategy();
+
+        var price = strategy.CalculatePricePerPassenger(20m);
+
+        Assert.Equal(49.99m, price);
+    }
 }
